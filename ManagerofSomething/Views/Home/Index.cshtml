@@ -1,0 +1,170 @@
+﻿<div id="tableBlock"></div>
+<div id="editBlock">
+    <p><b>Edit User</b></p>
+    <table>
+        <tr><td><input type="hidden" id="editId" /></td><td></td></tr>
+        <tr><td><label>Nickname: </label></td><td><input type="text" id="editNickname" /></td></tr>
+        <tr><td><label>Date: </label></td><td><input type="date" id="editDate" /></td></tr>
+        <tr><td><label>Time: </label></td><td><input type="time" id="editTime" /></td></tr>
+    </table>
+    <button id="editUser">Save</button>
+</div>
+<div id="createBlock">
+    <p><b>Adding user</b></p>
+    <table>
+        <tr><td><label>Nickanme: </label></td><td><input type="text" id="addNickname" /></td></tr>
+        <tr><td><label>Date: </label></td><td><input type="date" id="addDate" /></td></tr>
+        <tr><td><label>Time: </label></td><td><input type="time" id="addTime" /></td></tr>
+    </table>
+    <button id="addUser">Save</button>
+</div>
+@section scripts
+{
+    <script type="text/javascript">
+    $(document).ready(function () {
+
+        GetAllUsers();
+
+        $("#editUser").click(function (event) {
+            event.preventDefault();
+            EditUser();
+        });
+
+        $("#addUser").click(function (event) {
+            event.preventDefault();
+            AddUser();
+        });
+
+    });
+    // Отримання всього списку користувачів по ajax запиту
+    function GetAllUsers() {
+
+        $("#createBlock").css('display', 'block');
+        $("#editBlock").css('display', 'none');
+        $.ajax({
+            url: '/api/values',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                WriteResponse(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+ // Додавання нового користувача
+    function AddUser() {
+        // отримуємо значення для доданого юзера
+        var user = {
+            Nickname: $('#addNickname').val(),
+            Date: $('#addDate').val(),
+            Time: $('#addTime').val()
+        };
+
+        $.ajax({
+            url: '/api/values/',
+            type: 'POST',
+            data: JSON.stringify(user),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+ // delete user
+    function DeleteUser(id) {
+
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'DELETE',
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    // Edit 
+    function EditUser() {
+        var id = $('#editId').val()
+        // отримуємо нові значення для додавання нової книги
+        var user = {
+            Id: $('#editId').val(),
+            Nickname: $('#editNickname').val(),
+            Date: $('#editDate').val(),
+            Time: $('#editTime').val()
+        };
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'PUT',
+            data: JSON.stringify(user),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+ // вивід на екран даних
+    function WriteResponse(users) {
+        var strResult = "<table><th>ID</th><th>Nickname</th><th>Date</th><th>Time</th>";
+        $.each(users, function (index, user) {
+            strResult += "<tr><td>" + user.Id + "</td><td> " + user.Nickname + "</td><td>" +
+            user.Date + "</td><td>" + user.Time +
+            "</td><td><a id='editItem' data-item='" + user.Id + "' onclick='EditItem(this);' >Edit</a></td>" +
+            "<td><a id='delItem' data-item='" + user.Id + "' onclick='DeleteItem(this);' >Delete</a></td></tr>";
+        });
+        strResult += "</table>";
+        $("#tableBlock").html(strResult);
+
+    }
+    // обробник видалення
+    function DeleteItem(el) {
+        // отримуємо автоінкремент видалення користувача
+        var id = $(el).attr('data-item');
+        DeleteUser(id);
+    }
+    // обробнок редагування
+    function EditItem (el) {
+        // отримуємо id редагуємого користувача
+        var id = $(el).attr('data-item');
+        GetUser(id);
+    }
+    // вивід даних в форму редагування
+    function ShowUser(user) {
+        if (user != null) {
+            $("#createBlock").css('display', 'none');
+            $("#editBlock").css('display', 'block');
+            $("#editId").val(user.Id);
+            $("#editNickname").val(user.Nickname);
+            $("#editDate").val(user.Date);
+            $("#editTime").val(user.Time);
+        }
+        else {
+            alert("Username does not exist");
+        }
+    }
+    // запит на редагування інформації користувача
+    function GetUser(id) {
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                ShowUser(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    </script>
+}
